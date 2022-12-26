@@ -90,3 +90,68 @@ public:
     child.draw(shader);
   }
 }
+
+struct Vertex {
+  glm::vec3 position;
+  glm::vec3 normal;
+  glm::vec2 texCoords;
+};
+
+class Mesh {
+ public:
+  Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices);
+  void draw() const;
+  void bind() const;
+
+ private:
+  GLuint VAO, VBO, EBO;
+};
+
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices) {
+  glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+  glGenBuffers(1, &EBO);
+
+  glBindVertexArray(VAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+
+  // Vertex Positions
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
+  // Vertex Normals
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
+  // Vertex Texture Coords
+  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, texCoords));
+
+  glBindVertexArray(0);
+}
+
+void Mesh::draw(const Camera& camera, const glm::mat4& modelMatrix)
+{
+    // Use the appropriate shader program
+    glUseProgram(shaderProgram);
+
+    // Set the uniform variables for the model matrix and view-projection matrix
+    GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+    GLint viewProjLoc = glGetUniformLocation(shaderProgram, "viewProj");
+    glUniformMatrix4fv(viewProjLoc, 1, GL_FALSE, glm::value_ptr(camera.getViewProjection()));
+
+    // Bind the vertex array object and draw the mesh
+    glBindVertexArray(vao);
+    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
+}
+
+void Mesh::bind() {
+  glBindVertexArray(vao);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+}
