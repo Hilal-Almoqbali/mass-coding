@@ -49,7 +49,7 @@ std::vector<Node> readNodesFromFile(const std::string& filepath) {
 }
 
 /* the file:
-
+# this is a comment lol
 player
 {
   mesh: "player.obj"
